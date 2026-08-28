@@ -14,5 +14,4 @@ Automatický generátor čtenářských deníků pomocí Gemma 4 a DuckDuckGo se
 ```bash
 pip install -r requirements.txt
 ```
-
-3. Vytvoř `.env` soubor:
+3. Vlož API klíč do .env
