@@ -4,18 +4,15 @@ import requests
 from bs4 import BeautifulSoup
 from dotenv import load_dotenv
 from fpdf import FPDF
-from concurrent.futures import ThreadPoolExecutor, as_completed
 from tqdm import tqdm
 import os
 import re
 import sys
+import time
 import contextlib
-import threading
 
 load_dotenv()
 client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
-
-WORKERS = 3
 
 questions = [
     {"title": "Architektura osobního počítače, komponenty PC (PHW)", "points": """
@@ -173,7 +170,6 @@ questions = [
 - základní konstrukce vybraného objektového programovacího jazyka"""},
 ]
 
-
 @contextlib.contextmanager
 def suppress_stderr():
     with open(os.devnull, 'w') as devnull:
@@ -184,78 +180,77 @@ def suppress_stderr():
         finally:
             sys.stderr = old_stderr
 
-
 def web_search_and_scrape(query, num_results=5):
-    results = []
-    with DDGS() as ddgs:
-        hits = list(ddgs.text(query, max_results=num_results))
-    for hit in hits:
-        try:
-            html = requests.get(hit["href"], timeout=5, headers={"User-Agent": "Mozilla/5.0"}).text
-            soup = BeautifulSoup(html, "html.parser")
-            text = " ".join(p.get_text() for p in soup.find_all("p"))[:2000]
-            if len(text) > 200:
-                results.append(text)
-        except:
-            continue
-    if not results:
-        results = [h.get("body", "") for h in hits if h.get("body")]
-    return "\n\n".join(results)
-
+    # OŠETŘENO: Pokud vyhledávač spadne, kód nezhavaruje
+    try:
+        results = []
+        with DDGS() as ddgs:
+            hits = list(ddgs.text(query, max_results=num_results))
+        for hit in hits:
+            try:
+                html = requests.get(hit["href"], timeout=5, headers={"User-Agent": "Mozilla/5.0"}).text
+                soup = BeautifulSoup(html, "html.parser")
+                text = " ".join(p.get_text() for p in soup.find_all("p"))[:2000]
+                if len(text) > 200:
+                    results.append(text)
+            except:
+                continue
+        if not results:
+            results = [h.get("body", "") for h in hits if h.get("body")]
+        return "\n\n".join(results)
+    except Exception as e:
+        return "" # Vrátí prázdno, AI to zvládne i bez podkladů
 
 def generate_report(title, points, context):
     config = {"max_output_tokens": 8192}
+    max_retries = 3
 
-    with suppress_stderr():
-        response = client.models.generate_content(
-            model="gemma-4-26b-a4b-it",
-            config=config,
-            contents=f"""
-            Piš výhradně česky, nepoužívej cyrilici ani cizí písma.
-            Každý bod vysvětli podrobně na samostatném odstavci s prázdným řádkem mezi nimi.
-            Používej striktně tento formát pro nadpisy bodů: **Název bodu:** Vysvětlení
-            Nikdy nepiš "neuvádí se" — vždy doplň ze svých znalostí.
+    for attempt in range(max_retries):
+        try:
+            with suppress_stderr():
+                response = client.models.generate_content(
+                    model="gemma-4-26b-a4b-it",
+                    config=config,
+                    contents=f"""
+                    Piš výhradně česky, nepoužívej cyrilici ani cizí písma.
+                    Každý bod vysvětli podrobně na samostatném odstavci s prázdným řádkem mezi nimi.
+                    Používej striktně tento formát pro nadpisy bodů: **Název bodu:** Vysvětlení
+                    Nikdy nepiš "neuvádí se" — vždy doplň ze svých znalostí.
 
-            Téma maturitní otázky: {title}
+                    Téma maturitní otázky: {title}
+                    Podklady z webu: {context}
 
-            Podklady z webu:
-            {context}
+                    Vypracuj podrobnou odpověď na maturitní otázku podle těchto bodů: {points}
 
-            Vypracuj podrobnou odpověď na maturitní otázku podle těchto bodů:
-            {points}
-
-            Formát výstupu:
-            # {title}
-
-            Pro každý bod z osnovy vytvoř sekci:
-            ## Název bodu
-            Podrobné vysvětlení v několika větách. Uveď konkrétní příklady, technické detaily a praktické využití.
-            """
-        )
-
-    text = response.text
-    text = re.sub(r'<[^>]+>', '', text)
-    text = re.sub(r'[а-яА-ЯёЁ]+', '', text)
-    text = re.sub(r'[\u0980-\u09FF]+', '', text)
-    text = text.replace('&amp;', '&')
-    return text
-
+                    Formát výstupu:
+                    # {title}
+                    Pro každý bod z osnovy vytvoř sekci:
+                    ## Název bodu
+                    Podrobné vysvětlení v několika větách. Uveď konkrétní příklady, technické detaily a praktické využití.
+                    """
+                )
+            text = response.text
+            text = re.sub(r'<[^>]+>', '', text)
+            text = re.sub(r'[а-яА-ЯёЁ]+', '', text)
+            text = re.sub(r'[\u0980-\u09FF]+', '', text)
+            text = text.replace('&amp;', '&')
+            return text
+        except Exception as e:
+            if attempt < max_retries - 1:
+                tqdm.write(f"\n[API LIMIT] Čekám 15 sekund před dalším pokusem...")
+                time.sleep(15)
+            else:
+                return f"# {title}\n## Chyba\nNepodařilo se vygenerovat kvůli API limitu."
 
 def add_to_pdf(pdf, content):
     content = re.sub(r'<[^>]+>', '', content)
-    content = re.sub(r'[а-яА-ЯёЁ]+', '', content)
-    content = re.sub(r'[\u0980-\u09FF]+', '', content)
-    content = content.replace('&amp;', '&')
-
     pdf.add_page()
-
     for line in content.split("\n"):
         if line.startswith("# "):
             pdf.set_font("Arial", "B", 16)
             pdf.set_text_color(30, 30, 30)
             pdf.multi_cell(pdf.epw, 10, line[2:], new_x="LMARGIN", new_y="NEXT")
             pdf.ln(3)
-
         elif line.startswith("## "):
             pdf.set_font("Arial", "B", 12)
             pdf.set_text_color(60, 60, 150)
@@ -265,10 +260,8 @@ def add_to_pdf(pdf, content):
             pdf.line(pdf.l_margin, pdf.get_y(), pdf.l_margin + pdf.epw, pdf.get_y())
             pdf.ln(3)
             pdf.set_text_color(0, 0, 0)
-
         elif line.strip() == "":
             pdf.ln(2)
-
         else:
             bold_match = re.match(r'\*\*(.+?):\*\*\s*(.*)', line)
             if bold_match:
@@ -285,49 +278,59 @@ def add_to_pdf(pdf, content):
                 pdf.set_font("Arial", "", 10)
                 pdf.multi_cell(pdf.epw, 6, clean, new_x="LMARGIN", new_y="NEXT")
 
-
-def process_question(question):
-    title = question["title"]
-    points = question["points"]
-    tqdm.write(f"[START] {title}")
-    context = web_search_and_scrape(f"{title} maturita informatika vysvětlení")
-    if not context:
-        context = "Žádné informace, použij vlastní znalosti."
-    report = generate_report(title, points, context)
-    tqdm.write(f"[HOTOVO] {title}")
-    return title, report
-
-
-# zpracování
-results = {}
-
-with ThreadPoolExecutor(max_workers=WORKERS) as executor:
-    futures = {executor.submit(process_question, q): q for q in questions}
-    with tqdm(total=len(questions), desc="Celkový progress", unit="otázka") as pbar:
-        for future in as_completed(futures):
-            q = futures[future]
-            try:
-                title, report = future.result()
-                results[title] = report
-            except Exception as e:
-                tqdm.write(f"[CHYBA] {q['title']}: {e}")
-            finally:
-                pbar.update(1)
-
-# sestavení PDF ve správném pořadí
-pdf = FPDF()
-pdf.set_margins(20, 20, 20)
-pdf.set_auto_page_break(auto=True, margin=20)
-pdf.add_font("Arial", "", "C:/Windows/Fonts/arial.ttf")
-pdf.add_font("Arial", "B", "C:/Windows/Fonts/arialbd.ttf")
-
-for question in questions:
-    title = question["title"]
-    if title in results:
-        add_to_pdf(pdf, results[title])
-    else:
-        tqdm.write(f"[CHYBÍ] {title} — přeskočeno")
-
+# --- HLAVNÍ ZPRACOVÁNÍ ---
 os.makedirs("reports", exist_ok=True)
-pdf.output("reports/maturita_IT.pdf")
-print("\nUloženo: reports/maturita_IT.pdf")
+os.makedirs("backups", exist_ok=True)
+
+# Ošetření cesty k fontům (hledá běžné varianty Windows cest)
+font_paths = ["C:/Windows/Fonts/arial.ttf", "C:/Windows/Fonts/Arial.ttf"]
+bold_paths = ["C:/Windows/Fonts/arialbd.ttf", "C:/Windows/Fonts/Arialbd.ttf"]
+
+font_regular = next((p for p in font_paths if os.path.exists(p)), None)
+font_bold = next((p for p in bold_paths if os.path.exists(p)), None)
+
+if not font_regular or not font_bold:
+    print("VAROVÁNÍ: Font Arial se nenašel. Je možné, že PDF nepůjde vygenerovat správně.")
+
+print("\nZačínám bezpečné zpracování (po jedné otázce).")
+
+for i, question in enumerate(questions):
+    title = question["title"]
+    safe_filename = re.sub(r'[\\/*?:"<>|]', "", title).strip().replace(" ", "_").replace(",", "")
+    
+    # Přeskočit, pokud už PDF existuje (ušetří API při opětovném spuštění)
+    if os.path.exists(f"reports/{safe_filename}.pdf"):
+        print(f"[{i+1}/{len(questions)}] Přeskakuji, PDF už existuje: {title}")
+        continue
+        
+    print(f"\n[{i+1}/{len(questions)}] START: {title}")
+    
+    # 1. Scrapování s ochranou proti chybě
+    context = web_search_and_scrape(f"{title} maturita informatika")
+    
+    # 2. Generování textu
+    report = generate_report(title, question["points"], context)
+    
+    # 3. ZÁLOHA TEXTU - kdyby spadlo PDF, tohle ti vždycky zůstane!
+    with open(f"backups/{safe_filename}.txt", "w", encoding="utf-8") as f:
+        f.write(report)
+        
+    # 4. OKAMŽITÉ GENEROVÁNÍ A ULOŽENÍ PDF
+    try:
+        pdf = FPDF()
+        pdf.set_margins(20, 20, 20)
+        pdf.set_auto_page_break(auto=True, margin=20)
+        if font_regular and font_bold:
+            pdf.add_font("Arial", "", font_regular)
+            pdf.add_font("Arial", "B", font_bold)
+            
+        add_to_pdf(pdf, report)
+        pdf.output(f"reports/{safe_filename}.pdf")
+        print(f"[{i+1}/{len(questions)}] HOTOVO A ULOŽENO DO PDF: {title}")
+    except Exception as e:
+        print(f"[{i+1}/{len(questions)}] CHYBA PŘI TVORBĚ PDF: {e} (Text byl ale uložen do složky backups/)")
+        
+    # Oddech pro API, aby nás nezablokovali
+    time.sleep(5)
+
+print("\nVšechny otázky byly úspěšně zpracovány.")

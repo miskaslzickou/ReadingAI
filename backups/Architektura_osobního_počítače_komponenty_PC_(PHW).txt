@@ -1,0 +1,47 @@
+# Architektura osobního počítače, komponenty PC (PHW)
+
+## Hardware osobního počítače a počítačové architektury
+
+**Hardware osobního počítače:** Tento pojem označuje veškeré fyzické části a elektronické komponenty, ze kterých je počítač sestaven. Hardware zahrnuje vše, co můžete fyzicky dotknout, od procesoru a operační paměti až po kabely a periferní zařízení jako myš nebo klávesnice. Bez funkčního hardwaru nelze spustit žádný software, protože hardware tvoří nezbytnou nềnu pro vykonávání instrukcí a zpracování dat.
+
+**Počítačová architektura:** Představuje logický návrh a strukturu počítačového systému, která definuje, jak spolu jednotlivé části komunikují a jak jsou zpracovávány informace. Nejčastěji se setkáváme s architekturu von Neumannovou, která rozděluje počítač na procesor, paměť pro data a paměť pro programy, vstupní a výstupní zařízení a sběrnice. Správná architektura zajišťuje efektivní tok dat mezi komponentami a určuje maximální rychlost a výkon celého systému.
+
+## Case, napájecí zdroj, chlazení a základní deska
+
+**Case (Skříň):** Slouží jako ochranný rám a konstrukce, která drží všechny vnitřní komponenty pohromadě na svých místech. Kromě ochrany před mechanickým poškolením a prachem hraje skříň zásadní roli v zajištění správného proudění vzduchu (airflow), což je klíčové pro udržení bezpečných teplot. Moderní skříně se liší podle velikosti (např. Mini-ITX, Mid-Tower nebo Full-Tower) a designu, který může být zaměřen na estetiku nebo maximální chlazení.
+
+**Napájecí zdroj (PSU):** Je kritickým komponentem, jehož úkolem je přeměna střídavého proudu ze zásuvky na stabilní stejnosměrný proud s nízkým napětím, který je potřebný pro provoz elektroniky. Rozděluje energii do různých napěťových linií, typicky 12V pro procesor a grafickou kartu, 5V a 3,3V pro ostatní obvody. Kvalita napájecího zdroje přímo ovlivňuje stabilitu celého systému a bezpečnost komponent před výkyvy napětí.
+
+**Chlazení:** Systém chlazení je nezbytný pro odvádění odpadního tepla, které generují komponenty během provozu, zejména procesor a grafická karta. Může být vzduchové, které využívá pasivní chladiče (heatsinky) a aktivní ventilátory, nebo vodní (AIO či custom loop), které používá tekutinu k efektivnějšímu transportu tepla. Nedostatečné chlazení vede k přehřívání, což následně vyvolává tzv. thermal throttling, tedy záměrné snížení výkonu komponent pro ochranu před poškozením.
+
+**Základní deska (Motherboard):** Představuje hlavní komunikační uzel, ke kterému jsou všechny ostatní komponenty připojeny. Obsahuje elektrické obvody, čipy pro správu dat a různé sloty pro procesor, paměti a rozšiřující karty. Základní deska určuje, jaké typy procesorů a pamětí lze do počítače osadit a jak vysoký výkon může systém dosáhnout díky kvalitě jejích napájecích krovek a rychlosti sběrnic.
+
+## CPU, GPU, RAM, úložiště a zvukové karty
+
+**CPU (Procesor):** Je považován za mozek počítače, protože vykonává všechny matematické a logické operace na základě instrukcí ze softwaru. Obsahuje aritmeticko-logickou jednotku (ALU), řídicí jednotku a několik jader, která umožňují paralelní zpracování úloh. Výkon procesoru je určován především jeho frekvencí (v GHz), počtem jader a velikostí mezipaměti (cache).
+
+**GPU (Grafická karta):** Je specializovaný procesor navržený pro masivní paralelní výpočty, což je ideální pro vykreslování grafiky a zpracování obrazu. Na rozdíl od CPU má GPU tisíce menších jader, která zvládnají náročné úkoly v reálném čase, jako jsou videohry, střih videa nebo výpočty v umělé inteligenci. Obsahuje vlastní rychlou paměť (VRAM), která slouží k ukládání textur a geometrických dat.
+
+**RAM (Operační paměť):** Jedná se o rychlou, ale dočasnou (ulotnou) paměť, která slouží k ukládání dat a instrukcí, které procesor právě nebo právě nedávno potřeboval. Po vypnutí počítače se obsah RAM vymaže. Čím více RAM počítač má, tím více aplikací může běžet současně bez zpomalení, protože systém nemusí neustále sahat do mnohem pomalejšího úložiště.
+
+**Úložiště (HDD, SSD, M.2/NVMe):** Slouží k trvalému ukládání dat, operačního systému a aplikací. Klasické HDD využívají magnetické plotny a jsou levné, ale pomalé; SSD využívají flash paměť a jsou mnohem rychlejší. Moderní standard M.2 s protokolem NVMe využívá sběrnici PCIe, což umožňuje dosahovat extrémních rychlostí čtení a zápisu, které dramaticky zkracují dobu startu systému i načítání her.
+
+**Síťové a zvukové karty:** Jsou komponenty zodpovědné za externí komunikaci a multimediální výstupy. Síťová karta (NIC) umožňuje připojení k internetu přes Ethernet nebo Wi-Fi, zatímco zvuková karta zpracovává digitální data na analogový signál pro reproduktory nebo sluchátka. V dnešní době jsou tyto funkce většinou integrované přímo na základní desce, ale pro profesionální účely se stále používají samostatné karty.
+
+## BIOS/UEFI, firmware a CMOS/RTC
+
+**BIOS/UEFI:** Jsou nízkoúrovňové programy uložené v čipu na základní desce, které iniciují hardware při zapnutí počítače. BIOS je starší standard, zatímco UEFI je jeho moderní nástupce, který nabízí grafické rozhraní, podporu myši, rychlejší startování a práci s disky o velkém kapacitním limitu. Proces spuštění, kdy se kontroluje funkčnost komponent, se nazývá POST (Power-On Self-Test).
+
+**Firmware:** Je specifický druh softwaru, který je pevně integrován do hardwarového zařízení a řídí jeho základní funkce. Na rozdíl od běžných programů v operačním systému není firmware určen k interakci s uživatelem, ale k zajištění správného chodu konkrétního čipu nebo zařízení. Každá komponenta, od pevného disku až po klávesnici, má svůj vlastní firmware.
+
+**CMOS/RTC:** CMOS je malá paměť na základní desce, která uchovává nastavení systému (např. pořadí bootování nebo přetaktování procesoru) i po odpojení elektrické energie. Pro udržení těchto dat a pro správný chod hodiny funguje RTC (Real-Time Clock), což je hodina v reálném čase. Aby se tato data neztratila, je na základní desce umístěna malá baterie (obvykle typ CR2032).
+
+## Interní propojení komponent
+
+**PCI Express (PCIe):** Je nejrychlejší standard pro připojování rozšiřujících karet a moderních úložišť přímo k procesoru nebo čipsetu. Funguje na principu spojení několika rychlých link (např. x1, x4, x16), přičemž více linek znamená vyšší propustnost dat. Největší využití má u grafických karet a ultrarychlých NVMe disků.
+
+**SATA:** Je standardní rozhraní pro připojení datových kabelů k pevným diskům (HDD) a běžným SSD diskům. I když je pro moderní vysokorychlostní úložiště považováno za pomalejší než PCIe, stále je masivně využíváno pro velké disky s vysokou kapacitou, kde není prioritou extrémní rychlost, ale cena a objem dat.
+
+**M.2:** Je kompaktní formát slotu a konektoru na základní desce, který nahrazuje starší rozhraní. M.2 sloty mohou podporovat různé typy zařízení, od Wi-Fi modulů až po vysokorychlostní NVMe disky. Díky své malé velikosti umožňuje stavět kompaktní počítače a umožňuje diskům přímé připojení k hlavní sběrnici, což minimalizuje zpoždění.
+
+**USB interní konektory:** Jsou to piny a malé konektory umístěné na základní desce, které slouží k propojení vnitřního hardwaru s předním panelem skříně. Tyto konektory umožňují, aby uživatel mohl používat USB porty a audio jacky přímo na přední části počítačové skříně, aniž by musel instalovat zařízení přímo na zadní část základní desky.
