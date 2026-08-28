@@ -1,0 +1,7 @@
+google-genai
+ddgs
+requests
+beautifulsoup4
+python-dotenv
+fpdf2
+tqdm
